@@ -8,7 +8,7 @@ const P = {};
 const PROJECT = {
   title: 'سكون',
   width: 1080, height: 1920,   // vertical 9:16
-  duration: 60,                // placeholder length in seconds; set it to the episode's length
+  duration: 10,                // length in seconds (currently: the 10 s test scene, c1 «The Old Street»)
   tempo: null,                 // spoken audio: no beat grid (sway/bob/beatPulse stay calm)
   audio: null,                 // e.g. 'assets/episode.mp3' (the episode's own audio). null = silent clock
   background: '#000',
