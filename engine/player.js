@@ -1,8 +1,9 @@
-// Frame assembly + live player + offline hooks.
+// Sukoon engine · player: frame assembly, the live player, and the offline hooks used by tools/render.mjs and tools/check.mjs.
+// Reads PROJECT (size, duration, background, optional audio). Without audio, the player runs on a silent clock.
 function renderFrame(t) {
   bindCtx();
   for (const g of [s, f]) { g.setTransform(.5, 0, 0, .5, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.filter = 'none'; }
-  fill(s, P.night0); fill(f, '#000');
+  fill(s, PROJECT.background || '#000'); fill(f, '#000');
   let paint = {}; PAINT_FRAME = {};
   for (let k = 0; k < SHOTS.length; k++) {
     const sh = SHOTS[k], nx = SHOTS[k + 1];
@@ -23,9 +24,26 @@ Paint.init(canvas);
 const params = new URLSearchParams(location.search);
 window.__frameJPEG = (t, q = .93) => { renderFrame(t); return canvas.toDataURL('image/jpeg', q); };
 window.__ready = Promise.resolve(true);
+window.__project = { title: PROJECT.title, width: W, height: H, duration: DUR, audio: PROJECT.audio || null, background: PROJECT.background || '#000' };
+if (PROJECT.title) document.title = PROJECT.title;
+
+// a stand-in for <audio> when the project has no soundtrack yet: same fields the player uses, driven by the wall clock
+function silentClock() {
+  let base = 0, startedAt = null; const c = { onended: null };
+  const now = () => (startedAt === null ? base : base + (performance.now() - startedAt) / 1000);
+  Object.defineProperty(c, 'paused', { get: () => startedAt === null });
+  Object.defineProperty(c, 'currentTime', {
+    get: () => { const t = now(); if (t >= DUR && startedAt !== null) { base = DUR; startedAt = null; c.onended && c.onended(); } return Math.min(t, DUR); },
+    set: (v) => { base = clamp(v, 0, DUR); if (startedAt !== null) startedAt = performance.now(); },
+  });
+  c.play = () => { if (startedAt === null) { if (base >= DUR) base = 0; startedAt = performance.now(); } return Promise.resolve(); };
+  c.pause = () => { if (startedAt !== null) { base = now(); startedAt = null; } };
+  return c;
+}
 
 if (!params.has('offline')) {
-  const audio = document.getElementById('a');
+  const audio = PROJECT.audio ? document.getElementById('a') : silentClock();
+  if (PROJECT.audio) audio.src = PROJECT.audio;
   const bar = document.getElementById('bar'), fillEl = document.getElementById('fill'), tl = document.getElementById('time'), play = document.getElementById('play');
   let scrubT = params.has('t') ? parseFloat(params.get('t')) : 0; audio.currentTime = scrubT;
   const fmt = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;

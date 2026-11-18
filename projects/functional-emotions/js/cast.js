@@ -1,23 +1,41 @@
-// Shared cast + scenery used across chapters.
-
-function sky(top = P.night0, mid = P.night1, low = P.dusk, horizon = 760) {
-  s.fillStyle = vgrad(s, 0, horizon, [[0, top], [.55, mid], [1, low]]); s.fillRect(-100, -100, W + 200, horizon + 100);
-  s.fillStyle = low; s.fillRect(-100, horizon, W + 200, H);
-}
-function clouds(t, seed, y0, y1, col, n = 7, speed = 6) {
-  const r = rng(seed);
-  for (let i = 0; i < n; i++) {
-    const x = ((r() * (W + 800) + t * speed * (.5 + r())) % (W + 800)) - 400, y = lerp(y0, y1, r()), w = 260 + r() * 520, h = 40 + r() * 70;
-    s.fillStyle = col; s.beginPath(); s.ellipse(x, y, w / 2, h / 2, 0, 0, TAU); s.fill();
+// Functional Emotions · story cast: the researcher, the embers, the Poured One and its close-up bust.
+// (Moved here from the shared lib.js / cast.js; code unchanged.)
+// a researcher: coat, faceless head, optional lantern (light layer)
+function researcher(pose, x, y, sc, { lantern = 0, t = 0, hand = 'R', rim = 1, rimC = 'rgba(255,150,80,.9)', coat = '#2b2d44', lit = false, face = 0, glint = .6 } = {}) {
+  // backlit by default: a warm rim on the right edge, dark body; lit = pale coat facing the light
+  if (rim && !lit) figure(s, pose, { x: x + 4 * rim * sc / 200, y: y - 1, sc, color: rimC, coat: rimC, headC: rimC });
+  const J = figure(s, pose, { x, y, sc, color: '#0b0c16', coat: lit ? P.coat : coat, headC: lit ? '#3a3a48' : '#12131f' });
+  // round glasses: two small glints. face: -1 looking left, 0 at camera, 1 right; face = null hides them (seen from behind)
+  if (face !== null && glint > 0) for (const d of [-1, 1]) { const gx = J.head[0] + face * .045 * sc + d * .035 * sc * (1 - .5 * Math.abs(face)), gy = J.head[1] - .005 * sc; dot(f, gx, gy, .018 * sc, `rgba(230,240,255,${glint})`); }
+  if (lantern > 0) {
+    const h = hand === 'R' ? J.hdR : J.hdL; const lx = h[0], ly = h[1] + .1 * sc;
+    stroke(s, [h, [lx, ly]], '#111', 2);
+    dot(s, lx, ly + .04 * sc, .045 * sc, P.gold);
+    glow(lx, ly + .04 * sc, .7 * sc, `rgba(255,180,100,${.22 * lantern})`); glow(lx, ly + .04 * sc, .1 * sc, `rgba(255,235,190,${.9 * lantern})`);
   }
+  return J;
 }
-function stars(t, seed, n = 140, yMax = 600, a = 1) {
-  const r = rng(seed);
-  for (let i = 0; i < n; i++) { const x = r() * W, y = r() * yMax, tw = .5 + .5 * Math.sin(t * (1 + r() * 3) + i); dot(f, x, y, .8 + r() * 1.6, `rgba(255,240,220,${a * (.25 + .6 * tw) * r()})`); }
-}
-function moon(x, y, r, a = 1) {
-  dot(s, x, y, r, P.cream); dot(s, x + r * .38, y - r * .12, r * .92, '#18234e');
-  glow(x, y, r * 5, `rgba(255,230,190,${.22 * a})`);
+
+// ---- the embers: the 171, as little flame creatures ----
+// x,y = base of the flame; sz = height px; o: { eyes (0..1), look [-1..1], mood: 'calm'|'scared'|'happy'|'fierce', hue 0..1 (0 = gold, 1 = red), seed, lit (0..1) }
+function ember(t, x, y, sz, o = {}) {
+  if (!(sz > .5)) return;
+  const { eyes = 1, look = 0, mood = 'calm', hue = .3, seed = 0, lit = 1, lean = 0 } = o;
+  const fl = Math.sin(t * 9 + seed * 7) * .08 + Math.sin(t * 5.3 + seed) * .06;
+  const r = lerp(255, 235, hue), g = lerp(200, 70, hue), bb = lerp(90, 30, hue);
+  const tip = [x + (lean + fl) * sz, y - sz * (1 + fl * .5)];
+  s.fillStyle = `rgb(${r * .85 | 0},${g * .7 | 0},${bb * .6 | 0})`;
+  s.beginPath(); s.moveTo(tip[0], tip[1]); s.bezierCurveTo(x + sz * .55, y - sz * .45, x + sz * .42, y, x, y); s.bezierCurveTo(x - sz * .42, y, x - sz * .55, y - sz * .45, tip[0], tip[1]); s.fill();
+  f.save(); f.globalCompositeOperation = 'lighter';
+  f.fillStyle = `rgba(${r},${g},${bb},${(eyes > 0 && sz > 10 ? .22 : .55) * lit})`; f.beginPath(); f.moveTo(tip[0], tip[1]); f.bezierCurveTo(x + sz * .45, y - sz * .4, x + sz * .32, y, x, y); f.bezierCurveTo(x - sz * .32, y, x - sz * .45, y - sz * .4, tip[0], tip[1]); f.fill();
+  f.restore();
+  glow(x, y - sz * .35, sz * 1.1, `rgba(${r},${g},${bb},${.28 * lit})`);
+  if (eyes > 0 && sz > 10) {
+    const ey = y - sz * .32, ex = sz * .13, lx = look * sz * .06;
+    const h2 = mood === 'scared' ? .09 : mood === 'happy' ? .03 : mood === 'fierce' ? .04 : .06;
+    for (const d of [-1, 1]) { s.fillStyle = '#2a0c04'; s.beginPath(); s.ellipse(x + d * ex + lx, ey, sz * .05, sz * h2 * eyes, 0, 0, TAU); s.fill(); }
+    if (mood === 'fierce') stroke(s, [[x - ex * 1.8 + lx, ey - sz * .12], [x + lx, ey - sz * .05], [x + ex * 1.8 + lx, ey - sz * .12]], '#2a0c04', sz * .04);
+  }
 }
 
 // the poured one: amber body, light inside
@@ -65,4 +83,3 @@ function bust(t, x, y, sc, { turn = 0, eyes = 0, heat = 1, tilt = 0 } = {}) {
   for (let i = 0; i < 60; i++) { const a = hash(i) * TAU + t * (.2 + hash(i + 1) * .5), rr = sc * (.15 + hash(i + 2) * .8); dot(f, x + Math.cos(a) * rr, y + sc * .55 + Math.sin(a) * rr * .35, 1.5 + hash(i + 3) * 2.5, `rgba(255,${150 + hash(i + 4) * 90 | 0},80,${heat * (.4 + .5 * Math.sin(t * 2.3 + i))})`); }
   if (eyes > 0) for (const d of [-1, 1]) { const ex = hx + d * sc * .12 + turn * sc * .08, ey = hy - sc * .02; s.fillStyle = '#3a1406'; s.beginPath(); s.ellipse(ex, ey, sc * .06, sc * .035 * eyes, 0, 0, TAU); s.fill(); dot(f, ex, ey, sc * .022 * eyes, `rgba(255,245,215,${eyes})`); glow(ex, ey, sc * .12, `rgba(255,210,140,${.7 * eyes})`); }
 }
-

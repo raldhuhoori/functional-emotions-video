@@ -2,10 +2,13 @@
   "name": "functional-emotions-video",
   "private": true,
   "type": "module",
-  "description": "A painted music video for \"Functional Emotions\", rendered frame by frame with a custom GPU brushstroke renderer.",
+  "description": "A reusable painted-animation engine (GPU brushstroke renderer) and its projects: the \"Functional Emotions\" music video and Sukoon.",
   "scripts": {
-    "check": "node check.mjs",
-    "render": "node render.mjs 0 372.7 out/functional-emotions.mp4 6"
+    "check": "node tools/check.mjs",
+    "render": "node tools/render.mjs",
+    "render:functional-emotions": "node tools/render.mjs projects/functional-emotions 0 372.7 out/functional-emotions.mp4 6"
   },
-  "devDependencies": { "playwright": "^1.63.0" }
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
 }

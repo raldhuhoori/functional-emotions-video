@@ -1,5 +1,7 @@
 # Animation guide — read before painting a chapter
 
+> **Paths have moved since this brief was written** (the text below is kept as it was). The shared files are now `engine/paint.js`, `engine/core.js` + `engine/timeline.js` + `engine/rig.js` (was `js/lib.js`), `engine/scenery.js` + this project's `js/cast.js` (was `js/cast.js`), and `engine/player.js` (was `js/main.js`); the palette `P` is in this project's `js/project.js`. Run the checks from the repo root as `node tools/check.mjs projects/functional-emotions <out.jpg> t1 t2 …`. See [ENGINE.md](../../ENGINE.md).
+
 A 372.7 s music video for "Functional Emotions", painted with a custom GPU brushstroke renderer. The shot list is [STORYBOARD.md](STORYBOARD.md). Read its intro, rules and cast first, then your chapter's table.
 
 **The direction from the director:** a *real* music video, not a lyric video. Story, interesting scenes, great timing. **Never let a shot sit still.** Short shots (1.4–4 s), the camera always moving, action landing on beats, motivated transitions. Sincere and poignant in content, groovy and alive in body.

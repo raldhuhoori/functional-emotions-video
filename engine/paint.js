@@ -3,7 +3,11 @@
 // The GPU then repaints src with instanced brushstrokes that sample its colour and follow its edges,
 // adds fx as glowing light on top, and finishes with canvas weave + vignette.
 
-const W = 1920, H = 1080, SW = 960, SH = 540;
+// Output size comes from the project (PROJECT.width / PROJECT.height, defaulting to 1920x1080); scenes draw in
+// these full-size coordinates and the 2D layers run at half resolution. Sizes must be multiples of 8 so the
+// half-res layers and the quarter-size bloom buffer stay whole numbers.
+const W = (typeof PROJECT !== 'undefined' && PROJECT.width) || 1920, H = (typeof PROJECT !== 'undefined' && PROJECT.height) || 1080, SW = W / 2, SH = H / 2;
+if (W % 8 || H % 8) throw new Error(`PROJECT size ${W}x${H}: width and height must be multiples of 8`);
 
 const Paint = (() => {
   const src = document.createElement('canvas'); src.width = SW; src.height = SH;
